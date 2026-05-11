@@ -500,8 +500,7 @@ jobs:
   build-export-tool:
     name: Build Export Tool
     needs: get-version
-    runs-on:
-      group: large-runners
+    runs-on: ubuntu-latest
 
     steps:
       - name: Set environment variables
