@@ -57,7 +57,7 @@ jobs:
           go-version: 1.21
 
       - name: Fetch plugin module
-        run: go get github.com/turbot/steampipe-plugin-aws@v0.138.0
+        run: go get github.com/pluralsh/steampipe-plugin-aws@v0.138.0
 
       - name: Build steampipe-export
         run: |

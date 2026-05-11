@@ -55,9 +55,9 @@ jobs:
           MAJOR_VERSION=$(echo $VERSION | grep -o '^v[0-9]\+' || echo "v1")
           # v0 and v1 don't need version in path, v2+ do
           if [ "$MAJOR_VERSION" = "v1" ] || [ "$MAJOR_VERSION" = "v0" ]; then
-            go get github.com/turbot/steampipe-plugin-${{ env.PLUGIN_NAME }}@$VERSION
+            go get github.com/pluralsh/steampipe-plugin-${{ env.PLUGIN_NAME }}@$VERSION
           else
-            go get github.com/turbot/steampipe-plugin-${{ env.PLUGIN_NAME }}/${MAJOR_VERSION}@$VERSION
+            go get github.com/pluralsh/steampipe-plugin-${{ env.PLUGIN_NAME }}/${MAJOR_VERSION}@$VERSION
           fi
 
   build-postgres-14-fdw-linux-amd64:
@@ -74,7 +74,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check out steampipe-postgres-fdw
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -163,7 +163,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check out steampipe-postgres-fdw
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -251,7 +251,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Install PostgreSQL@14
         run: brew install postgresql@14
@@ -344,7 +344,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check architecture
         run: uname -a
@@ -441,7 +441,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check out steampipe-postgres-fdw
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -530,7 +530,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check out steampipe-postgres-fdw-anywhere
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -618,7 +618,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Install PostgreSQL@15
         run: brew install postgresql@15
@@ -717,7 +717,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check architecture
         run: uname -a
@@ -819,7 +819,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check out steampipe-sqlite-extension
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -875,7 +875,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Setup GoLang
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
@@ -937,7 +937,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check out steampipe-sqlite-extension
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -992,7 +992,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check architecture
         run: uname -a
@@ -1047,7 +1047,7 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/turbot/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
+          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
 
       - name: Check out steampipe-export
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

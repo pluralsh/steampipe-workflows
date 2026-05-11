@@ -99,9 +99,9 @@ main() {
 
   # Generate the URI for the FDW
   if [ "$version" = "latest" ]; then
-    uri="https://github.com/turbot/steampipe-plugin-${plugin}/releases/latest/download/${asset_name}"
+    uri="https://github.com/pluralsh/steampipe-plugin-${plugin}/releases/latest/download/${asset_name}"
   else
-    uri="https://github.com/turbot/steampipe-plugin-${plugin}/releases/download/${version}/${asset_name}"
+    uri="https://github.com/pluralsh/steampipe-plugin-${plugin}/releases/download/${version}/${asset_name}"
   fi
 
   echo ""
