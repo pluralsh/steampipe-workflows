@@ -253,8 +253,7 @@ jobs:
   build-sqlite-extension-linux-amd64:
     name: Build SQLite Extension for Linux - AMD64
     needs: get-version
-    runs-on:
-      group: large-runners
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check architecture
@@ -395,8 +394,7 @@ jobs:
 
   build-draft-release:
     name: Build Draft Release
-    runs-on:
-      group: large-runners
+    runs-on: ubuntu-22.04
     needs:
       # Postgres 15
       - build-postgres-15-fdw-linux-amd64
