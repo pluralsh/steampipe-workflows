@@ -64,8 +64,7 @@ jobs:
   build-postgres-15-fdw-linux-amd64:
     name: Build Postgres 15 FDW for Linux - AMD64
     needs: get-version
-    runs-on:
-      group: large-runners
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check architecture
