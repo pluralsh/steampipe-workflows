@@ -110,30 +110,32 @@ jobs:
 
       - name: Find stuff and set env
         run: |-
+          PG_CONFIG=/usr/lib/postgresql/15/bin/pg_config
+          "$PG_CONFIG" --version
 
-          which pg_config
-          pg_config --version
+          echo "$("$PG_CONFIG" --bindir)" >> "$GITHUB_PATH"
+          echo "PG_CONFIG=${PG_CONFIG}" >> "$GITHUB_ENV"
 
-          export PATH=$(pg_config --bindir):$PATH
-          export PGXS=$(pg_config --pgxs)
+          SERVER_LIB=$("$PG_CONFIG" --includedir-server)
+          INTERNAL_LIB=$("$PG_CONFIG" --includedir)/internal
 
-          export SERVER_LIB=$(pg_config --includedir)/15/server
-          export INTERNAL_LIB=$(pg_config --includedir)/internal
+          CFLAGS="$("$PG_CONFIG" --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g"
+          LDFLAGS=$("$PG_CONFIG" --ldflags)
 
-          export CFLAGS="$(pg_config --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g"
-          export PG_CFLAGS="$(pg_config --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g"
+          echo "CFLAGS=${CFLAGS}" >> "$GITHUB_ENV"
+          echo "PG_CFLAGS=${CFLAGS}" >> "$GITHUB_ENV"
+          echo "LDFLAGS=${LDFLAGS}" >> "$GITHUB_ENV"
+          echo "PG_LDFLAGS=${LDFLAGS}" >> "$GITHUB_ENV"
 
-          export LDFLAGS=$(pg_config --ldflags)
-          export PG_LDFLAGS=$(pg_config --ldflags)
-
-          ls -la $SERVER_LIB
-          ls -la $INTERNAL_LIB
+          ls -la "$SERVER_LIB"
+          ls -la "$INTERNAL_LIB"
 
       - name: Build steampipe-postgres-fdw-anywhere
         run: |
           pwd
           ls -ltr
-          make standalone plugin=${{ env.PLUGIN_NAME }} plugin_version=${{ env.VERSION }} plugin_github_url=${{ env.PLUGIN_GITHUB_URL }}
+          make clean
+          make V=1 standalone plugin=${{ env.PLUGIN_NAME }} plugin_version=${{ env.VERSION }} plugin_github_url=${{ env.PLUGIN_GITHUB_URL }} PG_CONFIG="${{ env.PG_CONFIG }}" CFLAGS="${{ env.CFLAGS }}" PG_CFLAGS="${{ env.PG_CFLAGS }}" LDFLAGS="${{ env.LDFLAGS }}" PG_LDFLAGS="${{ env.PG_LDFLAGS }}"
           ls -ltr
 
       - name: Rename and zip the build-Linux folder
