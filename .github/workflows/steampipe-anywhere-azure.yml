@@ -404,7 +404,6 @@ jobs:
       - build-postgres-15-fdw-osx-arm64
       # SQLite
       - build-sqlite-extension-linux-amd64
-      - build-sqlite-extension-osx-arm64
       # Export
       - build-export-tool
     steps:
