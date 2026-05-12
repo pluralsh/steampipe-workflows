@@ -82,7 +82,7 @@ jobs:
         with:
           persist-credentials: false
           repository: "pluralsh/steampipe-postgres-fdw"
-          ref: 46552922c662b2aec17179d3a6bc13a67458177d # v2.2.3
+          ref: 32b5cb187302f0208b23fbd582e87fc7a0274c3d # v2.2.3
 
       - name: If workflow_dispatch, get version from input
         run: |
@@ -170,7 +170,7 @@ jobs:
         with:
           persist-credentials: false
           repository: "pluralsh/steampipe-postgres-fdw"
-          ref: 46552922c662b2aec17179d3a6bc13a67458177d # v2.2.3
+          ref: 32b5cb187302f0208b23fbd582e87fc7a0274c3d # v2.2.3
 
       - name: If workflow_dispatch, get version from input
         run: |
@@ -287,7 +287,7 @@ jobs:
         with:
           persist-credentials: false
           repository: "pluralsh/steampipe-postgres-fdw"
-          ref: 46552922c662b2aec17179d3a6bc13a67458177d # v2.2.3
+          ref: 32b5cb187302f0208b23fbd582e87fc7a0274c3d # v2.2.3
 
       - name: If workflow_dispatch, get version from input
         run: |
