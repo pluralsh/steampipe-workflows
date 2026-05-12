@@ -15,7 +15,7 @@ permissions:
 jobs:
   get-version:
     name: Get Version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out steampipe-export
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -60,198 +60,10 @@ jobs:
             go get github.com/pluralsh/steampipe-plugin-${{ env.PLUGIN_NAME }}/${MAJOR_VERSION}@$VERSION
           fi
 
-  build-postgres-14-fdw-linux-amd64:
-    name: Build Postgres 14 FDW for Linux - AMD64
-    needs: get-version
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Check architecture
-        run: uname -a
-
-      - name: Set environment variables
-        run: |
-          plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
-          echo $plugin_name
-          echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
-
-      - name: Check out steampipe-postgres-fdw
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          repository: "turbot/steampipe-postgres-fdw"
-          ref: 217346cf8f9fd199ac319e5317ab84a83c6e151f # v2.2.0
-
-      - name: If workflow_dispatch, get version from input
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          fi
-          echo "Version: ${VERSION}"
-
-      - name: Setup GoLang
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
-        with:
-          go-version: 1.26
-
-      - name: Setup apt-get
-        run: |-
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-          sudo env ACCEPT_EULA=Y apt-get update
-          sudo env ACCEPT_EULA=Y apt-get upgrade
-
-      - name: Install PostgreSQL14 Dev
-        run: |-
-          sudo apt-get -y install postgresql-server-dev-14
-
-      - name: Find stuff and set env
-        run: |-
-
-          which pg_config
-          pg_config --version
-
-          export PATH=$(pg_config --bindir):$PATH
-          export PGXS=$(pg_config --pgxs)
-
-          export SERVER_LIB=$(pg_config --includedir)/14/server
-          export INTERNAL_LIB=$(pg_config --includedir)/internal
-
-          export CFLAGS="$(pg_config --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g"
-          export PG_CFLAGS="$(pg_config --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g"
-
-          export LDFLAGS=$(pg_config --ldflags)
-          export PG_LDFLAGS=$(pg_config --ldflags)
-
-          ls -la $SERVER_LIB
-          ls -la $INTERNAL_LIB
-
-      - name: Build steampipe-postgres-fdw-anywhere
-        run: |
-          pwd
-          ls -ltr
-          make standalone plugin=${{ env.PLUGIN_NAME }} plugin_version=${{ env.VERSION }} plugin_github_url=${{ env.PLUGIN_GITHUB_URL }}
-          ls -ltr
-
-      - name: Rename and zip the build-Linux folder
-        run: |-
-          mv build-Linux steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64
-          tar -czvf steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64.tar.gz steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64
-
-      - name: Save Linux Build Artifact - AMD64
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64.tar.gz
-          path: steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64.tar.gz
-          if-no-files-found: error
-
-  build-postgres-14-fdw-osx-arm64:
-    name: Build Postgres 14 FDW for Darwin - ARM64
-    needs: get-version
-    runs-on: macos-14
-    steps:
-      - name: Check architecture
-        run: uname -a
-
-      - name: Set environment variables
-        run: |
-          plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
-          echo $plugin_name
-          echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-          echo "PLUGIN_GITHUB_URL=github.com/pluralsh/steampipe-plugin-${plugin_name}" >> $GITHUB_ENV
-
-      - name: Check architecture
-        run: uname -a
-
-      - name: Install PostgreSQL@14
-        run: brew install postgresql@14
-
-      - name: PGConfig
-        run: |-
-          which pg_config
-          ls -l $(which pg_config)
-          PGXS=$(pg_config --pgxs)
-          SERVER_LIB=$(pg_config --includedir)/server
-          INTERNAL_LIB=$(pg_config --includedir)/internal
-
-          echo $PGXS
-          echo $SERVER_LIB
-          echo $INTERNAL_LIB
-
-          ls -l $PGXS
-          ls -l $SERVER_LIB
-          ls -l $INTERNAL_LIB
-
-      - name: Check out steampipe-postgres-fdw
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          repository: "turbot/steampipe-postgres-fdw"
-          ref: 217346cf8f9fd199ac319e5317ab84a83c6e151f # v2.2.0
-
-      - name: If workflow_dispatch, get version from input
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          fi
-          echo "Version: ${VERSION}"
-
-      - name: Setup Golang
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
-        with:
-          go-version: 1.26
-
-      - name: Find stuff and set env
-        run: |-
-          go version
-
-          which pg_config
-          pg_config --version
-
-          export PATH=$(pg_config --bindir):$PATH
-          export PGXS=$(pg_config --pgxs)
-
-          export SERVER_LIB=$(pg_config --includedir)/server
-          export INTERNAL_LIB=$(pg_config --includedir)/internal
-
-          export CFLAGS="$(pg_config --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g -mcmodel=large -fPIC -ffunction-sections -fdata-sections"
-          export PG_CFLAGS="$(pg_config --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g -mcmodel=large -fPIC -ffunction-sections -fdata-sections"
-
-          export LDFLAGS="$(pg_config --ldflags) -mcmodel=large -Wl,-dead_strip"
-          export PG_LDFLAGS="$(pg_config --ldflags) -mcmodel=large -Wl,-dead_strip"
-
-          echo "CFLAGS=${CFLAGS}" >> $GITHUB_ENV
-          echo "LDFLAGS=${LDFLAGS}" >> $GITHUB_ENV
-
-      - name: Build steampipe-postgres-fdw-anywhere
-        run: |
-          pwd
-          ls -ltr
-          make clean
-          make V=1 standalone plugin=${{ env.PLUGIN_NAME }} plugin_version=${{ env.VERSION }} plugin_github_url=${{ env.PLUGIN_GITHUB_URL }} CFLAGS="${{ env.CFLAGS }}" LDFLAGS="${{ env.LDFLAGS }}"
-          ls -ltr
-
-      - name: Rename and zip the build-Darwin folder
-        run: |-
-          mv build-Darwin steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64
-          tar -czvf steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64.tar.gz steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64
-
-      - name: Save MacOS Build Artifact - ARM64
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64.tar.gz
-          path: steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64.tar.gz
-          if-no-files-found: error
-
   build-postgres-15-fdw-linux-amd64:
     name: Build Postgres 15 FDW for Linux - AMD64
     needs: get-version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check architecture
@@ -445,7 +257,7 @@ jobs:
   build-sqlite-extension-linux-amd64:
     name: Build SQLite Extension for Linux - AMD64
     needs: get-version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check architecture
@@ -500,7 +312,7 @@ jobs:
   build-export-tool:
     name: Build Export Tool
     needs: get-version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Set environment variables
@@ -577,11 +389,8 @@ jobs:
 
   build-draft-release:
     name: Build Draft Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
-      # Postgres 14
-      - build-postgres-14-fdw-linux-amd64
-      - build-postgres-14-fdw-osx-arm64
       # Postgres 15
       - build-postgres-15-fdw-linux-amd64
       - build-postgres-15-fdw-osx-arm64
@@ -595,18 +404,6 @@ jobs:
           plugin_name=$(echo $GITHUB_REPOSITORY | cut -d'-' -f 3)
           echo $plugin_name
           echo "PLUGIN_NAME=${plugin_name}" >> $GITHUB_ENV
-
-      - name: Download steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64.tar.gz
-        id: download_pg14_linux_amd64
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64.tar.gz
-
-      - name: Download steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64.tar.gz
-        id: download_pg14_darwin_arm64
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64.tar.gz
 
       - name: Download steampipe_postgres_${{ env.PLUGIN_NAME }}.pg15.linux_amd64.tar.gz
         id: download_pg15_linux_amd64
@@ -677,21 +474,10 @@ jobs:
           tag_name: ${{ env.VERSION }}
           repository: ${{ github.repository }}
           files: |-
-            ${{ steps.download_pg14_darwin_amd64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_amd64.tar.gz
-            ${{ steps.download_pg14_darwin_arm64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.darwin_arm64.tar.gz
-            ${{ steps.download_pg14_linux_amd64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_amd64.tar.gz
-            ${{ steps.download_pg14_linux_arm64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg14.linux_arm64.tar.gz
-
-            ${{ steps.download_pg15_darwin_amd64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg15.darwin_amd64.tar.gz
             ${{ steps.download_pg15_darwin_arm64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg15.darwin_arm64.tar.gz
             ${{ steps.download_pg15_linux_amd64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg15.linux_amd64.tar.gz
-            ${{ steps.download_pg15_linux_arm64.outputs.download-path }}/steampipe_postgres_${{ env.PLUGIN_NAME }}.pg15.linux_arm64.tar.gz
 
-            ${{ steps.download_sqlite_darwin_amd64.outputs.download-path }}/steampipe_sqlite_${{ env.PLUGIN_NAME }}.darwin_amd64.tar.gz
             ${{ steps.download_sqlite_linux_amd64.outputs.download-path }}/steampipe_sqlite_${{ env.PLUGIN_NAME }}.linux_amd64.tar.gz
-            ${{ steps.download_sqlite_linux_arm64.outputs.download-path }}/steampipe_sqlite_${{ env.PLUGIN_NAME }}.linux_arm64.tar.gz
 
-            ${{ steps.download_export_darwin_amd64.outputs.download-path }}/steampipe_export_${{ env.PLUGIN_NAME }}.darwin_amd64.tar.gz
             ${{ steps.download_export_darwin_arm64.outputs.download-path }}/steampipe_export_${{ env.PLUGIN_NAME }}.darwin_arm64.tar.gz
             ${{ steps.download_export_linux_amd64.outputs.download-path }}/steampipe_export_${{ env.PLUGIN_NAME }}.linux_amd64.tar.gz
-            ${{ steps.download_export_linux_arm64.outputs.download-path }}/steampipe_export_${{ env.PLUGIN_NAME }}.linux_arm64.tar.gz
