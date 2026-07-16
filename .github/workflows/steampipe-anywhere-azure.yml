@@ -48,7 +48,7 @@ jobs:
       - name: Setup GoLang
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: 1.26
+          go-version: 1.26.5
 
       - name: Fetch plugin module
         run: |
@@ -96,7 +96,7 @@ jobs:
       - name: Setup GoLang
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: 1.26
+          go-version: 1.26.5
 
       - name: Setup apt-get
         run: |-
@@ -184,7 +184,7 @@ jobs:
       - name: Setup GoLang
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: 1.26
+          go-version: 1.26.5
 
       - name: Setup apt-get
         run: |-
@@ -301,7 +301,7 @@ jobs:
       - name: Setup Golang
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: 1.26
+          go-version: 1.26.5
 
       - name: Find stuff and set env
         run: |-
@@ -375,7 +375,7 @@ jobs:
       - name: Setup GoLang
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: 1.26
+          go-version: 1.26.5
 
       - name: Build steampipe-sqlite-extension
         run: |
@@ -432,7 +432,7 @@ jobs:
       - name: Setup GoLang
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: 1.26
+          go-version: 1.26.5
 
       - name: Build steampipe-export
         run: |
