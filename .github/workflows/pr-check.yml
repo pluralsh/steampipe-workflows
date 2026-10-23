@@ -26,8 +26,7 @@ jobs:
       # shellcheck is disabled because the existing workflows predate it
       - name: Run actionlint
         run: |
-          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
-          ./actionlint -color -shellcheck= -pyflakes=
+          docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -color -shellcheck= -pyflakes=
 
       - name: Check Go and FDW pins match across build workflows
         run: |
@@ -98,6 +97,8 @@ jobs:
 
       - name: Build FDW
         working-directory: fdw
+        env:
+          PLUGIN_VERSION: ${{ steps.pins.outputs.plugin_version }}
         run: |-
           PG_CONFIG=/usr/lib/postgresql/15/bin/pg_config
           SERVER_LIB=$("$PG_CONFIG" --includedir-server)
@@ -106,7 +107,7 @@ jobs:
           LDFLAGS=$("$PG_CONFIG" --ldflags)
           export PATH="$("$PG_CONFIG" --bindir):$PATH"
 
-          make standalone plugin=${PLUGIN_NAME} plugin_version=${{ steps.pins.outputs.plugin_version }} plugin_github_url=${PLUGIN_GITHUB_URL} PG_CONFIG="$PG_CONFIG" CFLAGS="$CFLAGS" PG_CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PG_LDFLAGS="$LDFLAGS"
+          make standalone plugin=${PLUGIN_NAME} plugin_version=${PLUGIN_VERSION} plugin_github_url=${PLUGIN_GITHUB_URL} PG_CONFIG="$PG_CONFIG" CFLAGS="$CFLAGS" PG_CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PG_LDFLAGS="$LDFLAGS"
           ls -la build-Linux
 
       - name: Load FDW into PostgreSQL 15
