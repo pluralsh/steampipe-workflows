@@ -1,0 +1,135 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  consistency:
+    name: Lint and check pins
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      # shellcheck is disabled because the existing workflows predate it
+      - name: Run actionlint
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -color -shellcheck= -pyflakes=
+
+      - name: Check Go and FDW pins match across build workflows
+        run: |
+          files=".github/workflows/steampipe-anywhere.yml .github/workflows/steampipe-anywhere-aws.yml .github/workflows/steampipe-anywhere-azure.yml"
+          go_versions=$(grep -ho 'go-version: .*' $files | sort -u)
+          fdw_refs=$(grep -h -A1 'repository: "pluralsh/steampipe-postgres-fdw"' $files | grep -o 'ref: .*' | sort -u)
+          echo "Go versions:"; echo "$go_versions"
+          echo "FDW refs:"; echo "$fdw_refs"
+          [ "$(echo "$go_versions" | wc -l)" -eq 1 ] || { echo "::error::go-version differs across build workflows"; exit 1; }
+          [ "$(echo "$fdw_refs" | wc -l)" -eq 1 ] || { echo "::error::steampipe-postgres-fdw ref differs across build workflows"; exit 1; }
+
+  fdw-smoke-test:
+    name: Build and load Postgres 15 FDW (${{ matrix.arch }})
+    needs: consistency
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-22.04
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      # vSphere is the smallest plugin; the Go toolchain and FDW are shared by all plugins
+      PLUGIN_NAME: vsphere
+      PLUGIN_GITHUB_URL: github.com/pluralsh/steampipe-plugin-vsphere
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Read pins from the build workflow
+        id: pins
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          file=.github/workflows/steampipe-anywhere.yml
+          go_version=$(grep -m1 -o 'go-version: .*' "$file" | cut -d' ' -f2)
+          fdw_ref=$(grep -m1 -A1 'repository: "pluralsh/steampipe-postgres-fdw"' "$file" | grep -o 'ref: [0-9a-f]*' | cut -d' ' -f2)
+          plugin_version=$(gh release view -R pluralsh/steampipe-plugin-${PLUGIN_NAME} --json tagName -q .tagName)
+          echo "go=${go_version}" >> "$GITHUB_OUTPUT"
+          echo "fdw_ref=${fdw_ref}" >> "$GITHUB_OUTPUT"
+          echo "plugin_version=${plugin_version}" >> "$GITHUB_OUTPUT"
+          echo "Go ${go_version}, FDW ${fdw_ref}, ${PLUGIN_NAME} ${plugin_version}"
+
+      - name: Check out steampipe-postgres-fdw
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          repository: "pluralsh/steampipe-postgres-fdw"
+          ref: ${{ steps.pins.outputs.fdw_ref }}
+          path: fdw
+
+      - name: Setup GoLang
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: ${{ steps.pins.outputs.go }}
+          cache: false
+
+      - name: Install PostgreSQL 15
+        run: |-
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get -y install postgresql-15 postgresql-server-dev-15
+
+      - name: Build FDW
+        working-directory: fdw
+        env:
+          PLUGIN_VERSION: ${{ steps.pins.outputs.plugin_version }}
+        run: |-
+          PG_CONFIG=/usr/lib/postgresql/15/bin/pg_config
+          SERVER_LIB=$("$PG_CONFIG" --includedir-server)
+          INTERNAL_LIB=$("$PG_CONFIG" --includedir)/internal
+          CFLAGS="$("$PG_CONFIG" --cflags) -I${SERVER_LIB} -I${INTERNAL_LIB} -g"
+          LDFLAGS=$("$PG_CONFIG" --ldflags)
+          export PATH="$("$PG_CONFIG" --bindir):$PATH"
+
+          make standalone plugin=${PLUGIN_NAME} plugin_version=${PLUGIN_VERSION} plugin_github_url=${PLUGIN_GITHUB_URL} PG_CONFIG="$PG_CONFIG" CFLAGS="$CFLAGS" PG_CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PG_LDFLAGS="$LDFLAGS"
+          ls -la build-Linux
+
+      - name: Load FDW into PostgreSQL 15
+        working-directory: fdw
+        run: |-
+          PG_CONFIG=/usr/lib/postgresql/15/bin/pg_config
+          sudo cp build-Linux/*.so "$("$PG_CONFIG" --pkglibdir)/"
+          sudo cp build-Linux/*.sql build-Linux/*.control "$("$PG_CONFIG" --sharedir)/extension/"
+          # GitHub runners do not create the default cluster when PostgreSQL is installed
+          [ -d /etc/postgresql/15/main ] || sudo pg_createcluster 15 main
+          sudo pg_ctlcluster 15 main status || sudo pg_ctlcluster 15 main start
+
+          # Credentials are dummies: importing the schema only needs a parseable config, not a vCenter
+          tables=$(sudo -u postgres psql --cluster 15/main -v ON_ERROR_STOP=1 -qtA <<-EOSQL
+          CREATE EXTENSION steampipe_postgres_${PLUGIN_NAME};
+          CREATE SERVER steampipe FOREIGN DATA WRAPPER steampipe_postgres_${PLUGIN_NAME}
+            OPTIONS (config E'vsphere_server = "localhost"\nuser = "user"\npassword = "password"\nallow_unverified_ssl = true\n');
+          CREATE SCHEMA ${PLUGIN_NAME};
+          IMPORT FOREIGN SCHEMA ${PLUGIN_NAME} FROM SERVER steampipe INTO ${PLUGIN_NAME};
+          SELECT count(*) FROM information_schema.foreign_tables WHERE foreign_table_schema = '${PLUGIN_NAME}';
+          EOSQL
+          )
+          tables=$(echo "$tables" | tail -n1)
+          echo "Imported ${tables} foreign tables"
+          [ "$tables" -gt 0 ] || { echo "::error::no foreign tables imported"; exit 1; }
