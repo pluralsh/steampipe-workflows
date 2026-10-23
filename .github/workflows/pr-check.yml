@@ -115,6 +115,8 @@ jobs:
           PG_CONFIG=/usr/lib/postgresql/15/bin/pg_config
           sudo cp build-Linux/*.so "$("$PG_CONFIG" --pkglibdir)/"
           sudo cp build-Linux/*.sql build-Linux/*.control "$("$PG_CONFIG" --sharedir)/extension/"
+          # GitHub runners do not create the default cluster when PostgreSQL is installed
+          [ -d /etc/postgresql/15/main ] || sudo pg_createcluster 15 main
           sudo pg_ctlcluster 15 main status || sudo pg_ctlcluster 15 main start
 
           # Credentials are dummies: importing the schema only needs a parseable config, not a vCenter
