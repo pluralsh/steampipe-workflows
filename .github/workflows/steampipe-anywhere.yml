@@ -83,6 +83,11 @@ jobs:
           repository: "pluralsh/steampipe-postgres-fdw"
           ref: 97a19c8ac30561856a320ea10ca0aff2bcd6fc8d # develop 97a19c8
 
+      - name: Align FDW x/text security floor
+        run: |
+          test "$(grep -c 'golang.org/x/text@v0.41.0' Makefile)" -eq 1
+          sed -i 's/golang.org\/x\/text@v0\.41\.0/golang.org\/x\/text@v0.43.0/' Makefile
+
       - name: If workflow_dispatch, get version from input
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
@@ -172,6 +177,11 @@ jobs:
           persist-credentials: false
           repository: "pluralsh/steampipe-postgres-fdw"
           ref: 97a19c8ac30561856a320ea10ca0aff2bcd6fc8d # develop 97a19c8
+
+      - name: Align FDW x/text security floor
+        run: |
+          test "$(grep -c 'golang.org/x/text@v0.41.0' Makefile)" -eq 1
+          sed -i 's/golang.org\/x\/text@v0\.41\.0/golang.org\/x\/text@v0.43.0/' Makefile
 
       - name: If workflow_dispatch, get version from input
         run: |

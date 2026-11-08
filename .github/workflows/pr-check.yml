@@ -82,6 +82,12 @@ jobs:
           ref: ${{ steps.pins.outputs.fdw_ref }}
           path: fdw
 
+      - name: Align FDW x/text security floor
+        working-directory: fdw
+        run: |
+          test "$(grep -c 'golang.org/x/text@v0.41.0' Makefile)" -eq 1
+          sed -i 's/golang.org\/x\/text@v0\.41\.0/golang.org\/x\/text@v0.43.0/' Makefile
+
       - name: Setup GoLang
         uses: actions/setup-go@v7.0.0
         with:
